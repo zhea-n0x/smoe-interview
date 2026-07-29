@@ -37,11 +37,6 @@ export default function TodoCard({
       className="p-5 rounded-[1.6rem] border border-slate-200 bg-white shadow-sm transition-all duration-200"
     >
       <div>
-        {todo.completed ? (
-          <div className="inline-flex items-center rounded-full bg-emerald-50 px-3 mb-3 py-2 text-[11px] font-bold uppercase text-emerald-700 w-full">
-            Completed
-          </div>
-        ) : ""}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex items-start gap-3 flex-1">
             <button
