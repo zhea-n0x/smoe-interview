@@ -36,7 +36,7 @@ export default function TodoApp() {
       const payload = await requestJson<ApiEnvelope<TodoApiItem[]>>('/api/todos');
       setTodos(payload.data.map((todo) => mapTodo(todo)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unable to load todos');
+      setError(err instanceof Error ? err.message : 'unable to load todos');
     } finally {
       setLoading(false);
     }
@@ -179,60 +179,107 @@ export default function TodoApp() {
     }
   };
 
-  const filteredTodos = todos.filter((todo) => {
-    const matchesTab = activeTab === 'completed'
-      ? todo.completed
-      : activeTab === 'active'
-        ? !todo.completed
-        : true;
-    const matchesSearch =
-      todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      todo.description.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
-  });
+  const completedCount = todos.filter((todo) => todo.completed).length;
+  const activeCount = todos.filter((todo) => !todo.completed).length;
+  const allCount = todos.length;
+
+  const filteredTodos = todos
+    .slice()
+    .sort((a, b) => {
+      if (a.completed !== b.completed) {
+        return a.completed ? 1 : -1;
+      }
+      return new Date(a.createdAtRaw).getTime() - new Date(b.createdAtRaw).getTime();
+    })
+    .filter((todo) => {
+      const matchesTab = activeTab === 'completed'
+        ? todo.completed
+        : activeTab === 'active'
+          ? !todo.completed
+          : true;
+      const matchesSearch =
+        todo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        todo.description.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesTab && matchesSearch;
+    });
+
+  const todayLabel = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date());
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-10 font-sans text-slate-800">
-      <div className="max-w-6xl mx-auto space-y-6">
-        
-        <header className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-slate-900">Todo List</h1>
-        </header>
-
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-            <div className="relative flex-1 sm:w-64">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search List"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-              />
+      <div className="max-w-4xl mx-auto space-y-6">
+        <header className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-3xl font-semibold text-slate-900">Todo List</h1>
+              <p className="mt-2 text-sm text-slate-500">
+                {todayLabel} · {completedCount} of {todos.length} tasks done
+              </p>
             </div>
 
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="relative w-full sm:w-80">
+                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full rounded-full border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <button
+                onClick={() => setIsAdding(!isAdding)}
+                className={`rounded-full px-5 py-3 text-sm font-semibold transition ${
+                  isAdding
+                    ? 'bg-slate-200 text-slate-800 hover:bg-slate-300'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
+              >
+                {isAdding ? 'Close' : '+ New Task'}
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3 rounded-full bg-slate-100 p-2 shadow-inner">
             <button
-              onClick={() => setIsAdding(!isAdding)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm ${
-                isAdding
-                  ? 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              onClick={() => setActiveTab('all')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeTab === 'all'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
               }`}
             >
-              {isAdding ? (
-                <>
-                  <X className="w-4 h-4" /> Close Form
-                </>
-              ) : (
-                <>
-                  <Plus className="w-4 h-4" /> Add New List
-                </>
-              )}
+              All ({allCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('active')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeTab === 'active'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Active ({activeCount})
+            </button>
+            <button
+              onClick={() => setActiveTab('completed')}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                activeTab === 'completed'
+                  ? 'bg-white text-slate-900 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-900'
+              }`}
+            >
+              Completed ({completedCount})
             </button>
           </div>
-        </div>
+        </header>
 
         {isAdding && (
           <form
@@ -293,40 +340,7 @@ export default function TodoApp() {
           </form>
         )}
 
-        <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-2">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-              activeTab === 'all'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            All Tasks
-          </button>
-          <button
-            onClick={() => setActiveTab('active')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-              activeTab === 'active'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Active Task
-          </button>
-          <button
-            onClick={() => setActiveTab('completed')}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition ${
-              activeTab === 'completed'
-                ? 'bg-white text-slate-900 shadow-sm'
-                : 'text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            Completed
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="space-y-4">
           {filteredTodos.map((todo) => {
             const isEditing = editingId === todo.id;
 
