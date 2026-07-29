@@ -1,7 +1,7 @@
 rootProject.name = "todos"
 
 pluginManagement {
-    includeBuild("../db-plugin")
+    // includeBuild("../db-plugin")
 
     repositories {
         gradlePluginPortal()
