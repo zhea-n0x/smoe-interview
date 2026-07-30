@@ -5,4 +5,4 @@ function fizzBuzz(limit){
   })
 }
 
-fizzBuzz(20);
+fizzBuzz(100);
